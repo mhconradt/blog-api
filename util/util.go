@@ -34,7 +34,6 @@ func ToStringSlice(is []interface{}) []string {
 	numVals := len(is)
 	vs := make([]string, numVals, numVals)
 	for i, v := range is {
-		fmt.Println("val: ", v)
 		vs[i] = v.(string)
 	}
 	return vs

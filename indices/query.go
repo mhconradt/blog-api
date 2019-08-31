@@ -1,7 +1,6 @@
 package indices
 
 import (
-	"fmt"
 	"github.com/mhconradt/blog-api/config"
 	"github.com/mhconradt/blog-api/redis_client"
 	"net/url"
@@ -43,10 +42,16 @@ func DirectionFromQuery(v url.Values, f string) Direction {
 	}
 	switch strings.ToLower(dir) {
 	case "desc":
+		fallthrough
 	case "descending":
 		return Descending
+	case "asc":
+		fallthrough
+	case "ascending":
+		fallthrough
+	default:
+		return Ascending
 	}
-	return Ascending
 }
 
 func IndexFromQuery(v url.Values) Index {
@@ -59,6 +64,10 @@ func IndexFromQuery(v url.Values) Index {
 		return FullTextSearch
 	case "topic":
 		return Topic
+	case "date":
+		fallthrough
+	case "time":
+		fallthrough
 	default:
 		return Date
 	}
@@ -95,24 +104,26 @@ func LimitFromQuery(v url.Values) int {
 
 func ParseQuery(v url.Values) Query {
 	pd := DirectionFromQuery(v, "pageDir")
-	fmt.Println("pd: ", pd)
 	i := IndexFromQuery(v)
-	fmt.Println("i:", i)
 	t, _ := StringAtField(v, "term")
 	c := CursorFromQuery(v)
+	l := LimitFromQuery(v)
 	return Query{
 		PageDirection: pd,
 		Index:         i,
 		Term:          t,
 		Cursor:        c,
+		Limit: l,
 	}
 }
 
 func GetIndexForQuery(q Query, c *redis_client.RedisClient) ArticleIndex {
 	switch q.Index {
 	case Topic:
-	default:
 		return TopicIndex{c}
+	case Date:
+		fallthrough
+	default:
+		return DateIndex{c}
 	}
-	return TopicIndex{c}
 }

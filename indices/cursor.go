@@ -10,11 +10,12 @@ func NewCursor(q Query, results []string) Cursor {
 	cur := Cursor{}
 	cur.Count = int64(len(results))
 	cur.Forward = q.Cursor + cur.Count
-	cur.Reverse = func(a, b int64) int64 {
-		if a > b {
-			return a
-		}
-		return b
-	}(q.Cursor, q.Cursor - int64(q.Limit))
+	if cur.Count < int64(q.Limit) {
+		cur.Forward = -1
+	}
+	cur.Reverse = q.Cursor - int64(q.Limit)
+	if q.Cursor == 0 {
+		cur.Reverse = -1
+	}
 	return cur
 }

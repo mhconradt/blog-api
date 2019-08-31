@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"fmt"
 	"github.com/mhconradt/blog-api/article"
 	"github.com/mhconradt/blog-api/indices"
 	"github.com/mhconradt/blog-api/redis_client"
@@ -17,7 +16,6 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request, c *redis_client.Redis
 		er(err, 403)
 		return
 	}
-	fmt.Println("topics: ", a.Topics)
 	if err = indices.UpdateIndices(a, c); err != nil {
 		er(err, 500)
 		return

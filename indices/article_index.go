@@ -34,5 +34,5 @@ func UpdateIndices(a article.Article, c *redis_client.RedisClient) error {
 }
 
 func GetIndices(c *redis_client.RedisClient) []ArticleIndex {
-	return []ArticleIndex{TopicIndex{c}}
+	return []ArticleIndex{TopicIndex{c}, DateIndex{c}}
 }

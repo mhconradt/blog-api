@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/mhconradt/blog-api/redis_client"
 	"net/http"
@@ -18,5 +17,4 @@ func GetArticle(w http.ResponseWriter, r *http.Request, c *redis_client.RedisCli
 		return
 	}
 	NewArticleResponder(w)(a, 200)
-	fmt.Println(w.Header())
 }

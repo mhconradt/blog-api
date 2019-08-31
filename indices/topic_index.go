@@ -6,6 +6,7 @@ import (
 	"github.com/mhconradt/blog-api/config"
 	"github.com/mhconradt/blog-api/redis_client"
 	"github.com/mhconradt/blog-api/util"
+	"strings"
 )
 
 type TopicIndex struct {
@@ -18,7 +19,6 @@ func (t TopicIndex) Populate(a article.Article, c *redis_client.RedisClient) err
 }
 
 func (t TopicIndex) Update(a article.Article, c *redis_client.RedisClient) error {
-	fmt.Println("topics index upd8: ", a.Topics)
 	if len(a.Topics) == 0 {
 		return nil
 	}
@@ -27,8 +27,6 @@ func (t TopicIndex) Update(a article.Article, c *redis_client.RedisClient) error
 	reverseIndexKey := fmt.Sprintf("topics.reverse.%v", a.ID)
 	old := c.LRange(reverseIndexKey, 0, -1).Val()
 	additions, removals := Diff(old, a.Topics)
-	fmt.Println("a: ", additions)
-	fmt.Println("r: ", removals)
 	if len(additions) > 0 {
 		if cmd := c.EvalSha(config.PopulateIndex, additions, "topics", a.WithHitPrefix()); cmd.Err() != nil {
 			return cmd.Err()
@@ -43,16 +41,26 @@ func (t TopicIndex) Update(a article.Article, c *redis_client.RedisClient) error
 }
 
 func (t TopicIndex) Search(q Query) ([]string, Cursor, error) {
-	end := q.Cursor + (q.Cursor + int64(int(q.PageDirection)*q.Limit))
+	// range is inclusive
+	end := q.Cursor + int64(int(q.PageDirection)*q.Limit) - 1
+	// if pageDir is ascending: cursor is index of beginning next page
+	fmt.Println("end: ", end)
+	fmt.Println("pd:", q.PageDirection)
+	fmt.Println("limit:", q.Limit)
 	min, max := func(a, b int64) (int64, int64) {
 		if a > b {
 			return b, a
 		}
 		return a, b
 	}(q.Cursor, end)
+	// cursor will be higher than end on desc.
+	fmt.Println(min, max)
 	result, err := t.EvalSha(config.SearchListIndex, []string{}, "topics", q.Term, min, max).Result()
 	if err != nil {
-		return []string{}, Cursor{}, err
+		if strings.Index(err.Error(), "table expected") == -1 {
+			return []string{}, Cursor{}, err
+		}
+		result = []interface{}{}
 	}
 	vs := util.ToStringSlice(result.([]interface{}))
 	cur := NewCursor(q, vs)
@@ -92,6 +100,5 @@ func Diff(old, current []string) ([]string, []string) {
 			additions = append(additions, k)
 		}
 	}
-	fmt.Println("m: ", m)
 	return additions, removals
 }

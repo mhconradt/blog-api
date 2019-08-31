@@ -52,6 +52,14 @@ func NewArticleResponder(w http.ResponseWriter) func(a article.Article, status i
 	}
 }
 
+func NewSearchResultsResponder(w http.ResponseWriter) func(r SearchResult, status int) {
+	return func(r SearchResult, status int) {
+		w.Header().Add("Content-Type", "application/json")
+		w.WriteHeader(status)
+		_ = json.NewEncoder(w).Encode(r)
+	}
+}
+
 func NewResponder(w http.ResponseWriter) func(msg string, status int) {
 	return func(msg string, status int) {
 		w.WriteHeader(status)
