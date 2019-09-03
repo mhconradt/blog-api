@@ -1,7 +1,6 @@
 package indices
 
 import (
-	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/mhconradt/blog-api/article"
 	"github.com/mhconradt/blog-api/config"
@@ -29,7 +28,6 @@ func (d DateIndex) Update(_ article.Article, _ *redis_client.RedisClient) error 
 func (d DateIndex) Search(q Query) ([]string, Cursor, error) {
 	result, err := d.EvalSha(config.SearchZIndex, []string{config.DateIndexKey}, q.Cursor, q.Limit).Result()
 	if err != nil {
-		fmt.Println(err)
 		if strings.Index(err.Error(), "table expected") == -1 {
 			return []string{}, Cursor{}, err
 		}

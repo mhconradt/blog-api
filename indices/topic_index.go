@@ -14,7 +14,7 @@ type TopicIndex struct {
 }
 
 func (t TopicIndex) Populate(a article.Article, c *redis_client.RedisClient) error {
-	cmd := c.EvalSha(config.PopulateIndex, a.Topics, "topics", a.WithHitPrefix())
+	cmd := c.EvalSha(config.PopulateIndex, a.Topics, "topics", a.ID, config.SnippetPrefix)
 	return cmd.Err()
 }
 
@@ -28,12 +28,12 @@ func (t TopicIndex) Update(a article.Article, c *redis_client.RedisClient) error
 	old := c.LRange(reverseIndexKey, 0, -1).Val()
 	additions, removals := Diff(old, a.Topics)
 	if len(additions) > 0 {
-		if cmd := c.EvalSha(config.PopulateIndex, additions, "topics", a.WithHitPrefix()); cmd.Err() != nil {
+		if cmd := c.EvalSha(config.PopulateIndex, additions, "topics", a.ID, config.SnippetPrefix); cmd.Err() != nil {
 			return cmd.Err()
 		}
 	}
 	if len(removals) > 0 {
-		if cmd := c.EvalSha(config.RemoveIndexEntries, removals, "topics", a.WithHitPrefix()); cmd.Err() != nil {
+		if cmd := c.EvalSha(config.RemoveIndexEntries, removals, "topics", a.ID, config.SnippetPrefix); cmd.Err() != nil {
 			return cmd.Err()
 		}
 	}
@@ -44,9 +44,6 @@ func (t TopicIndex) Search(q Query) ([]string, Cursor, error) {
 	// range is inclusive
 	end := q.Cursor + int64(int(q.PageDirection)*q.Limit) - 1
 	// if pageDir is ascending: cursor is index of beginning next page
-	fmt.Println("end: ", end)
-	fmt.Println("pd:", q.PageDirection)
-	fmt.Println("limit:", q.Limit)
 	min, max := func(a, b int64) (int64, int64) {
 		if a > b {
 			return b, a
@@ -54,7 +51,6 @@ func (t TopicIndex) Search(q Query) ([]string, Cursor, error) {
 		return a, b
 	}(q.Cursor, end)
 	// cursor will be higher than end on desc.
-	fmt.Println(min, max)
 	result, err := t.EvalSha(config.SearchListIndex, []string{}, "topics", q.Term, min, max).Result()
 	if err != nil {
 		if strings.Index(err.Error(), "table expected") == -1 {

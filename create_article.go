@@ -18,7 +18,7 @@ func CreateArticle(w http.ResponseWriter, r *http.Request, c *redis_client.Redis
 		return
 	}
 	a.ID = c.NewId()
-	a.Timestamp = time.Now().UnixNano() / 1e6
+	a.Timestamp = time.Now().Unix()
 	if err = indices.PopulateIndices(a, c); err != nil {
 		er(err, 500)
 		return

@@ -1,9 +1,10 @@
 package indices
 
 type Cursor struct {
-	Forward int64 `json:"forward"`
-	Reverse int64 `json:"reverse"`
-	Count int64 `json:"count"`
+	Forward int64  `json:"forward"`
+	Reverse int64  `json:"reverse"`
+	Count   int64  `json:"count"`
+	Term    string `json:"term"`
 }
 
 func NewCursor(q Query, results []string) Cursor {
@@ -17,5 +18,6 @@ func NewCursor(q Query, results []string) Cursor {
 	if q.Cursor == 0 {
 		cur.Reverse = -1
 	}
+	cur.Term = q.Term
 	return cur
 }

@@ -23,7 +23,7 @@ func SnippetFromArticle(a article.Article) ArticleSnippet {
 	return ArticleSnippet{
 		a.ID,
 		a.Timestamp,
-		bodySnippet,
 		a.Title,
+		bodySnippet,
 	}
 }

@@ -113,7 +113,7 @@ func ParseQuery(v url.Values) Query {
 		Index:         i,
 		Term:          t,
 		Cursor:        c,
-		Limit: l,
+		Limit:         l,
 	}
 }
 
@@ -121,6 +121,8 @@ func GetIndexForQuery(q Query, c *redis_client.RedisClient) ArticleIndex {
 	switch q.Index {
 	case Topic:
 		return TopicIndex{c}
+	case FullTextSearch:
+		return FullTextSearchIndex{c}
 	case Date:
 		fallthrough
 	default:
