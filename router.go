@@ -28,6 +28,7 @@ func main() {
 	r.HandleFunc("/articles", WrapRedisHandler(UpdateArticle)).Methods("PUT")
 	r.HandleFunc("/articles/{id}", WrapRedisHandler(GetArticle)).Methods("GET")
 	r.HandleFunc("/articles", WrapRedisHandler(ListArticles)).Methods("GET")
+	r.HandleFunc("/", LivenessProbeFunction) //DELETE
 	port := util.LookupWithDefault("PORT", "3000")
 	fmt.Println("listening for requests on port:", port)
 	log.Fatal(http.ListenAndServe(":"+port, r))
@@ -43,6 +44,12 @@ ENDPOINTS:
 
 // How to decouple rendering from data access?
 // Have the rendering process call the API. Boom.
+
+
+func LivenessProbeFunction(w http.ResponseWriter, r *http.Request) {
+	w.WriteHeader(202)
+	_, _ = w.Write([]byte("all is well"))
+}
 
 func NewArticleResponder(w http.ResponseWriter) func(a article.Article, status int) {
 	return func(a article.Article, status int) {

@@ -10,8 +10,8 @@ import (
 )
 
 type SearchResult struct {
-	 Results []article_snippet.ArticleSnippet `json:"results"`
-	 Cursor indices.Cursor `json:"cursor"`
+	Results []article_snippet.ArticleSnippet `json:"results"`
+	Cursor  indices.Cursor                   `json:"cursor"`
 }
 
 func ListArticles(w http.ResponseWriter, r *http.Request, c *redis_client.RedisClient) {
@@ -44,4 +44,4 @@ No Cursor
 Yes Cursor (json)
 	6.2ms
 
- */
+*/

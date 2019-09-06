@@ -1,4 +1,4 @@
-FROM golang:1.13rc-alpine3.0
+FROM golang:1.13.0-alpine3.10
 
 # Set the Current Working Directory inside the container
 WORKDIR $GOPATH/src/github.com/mhconradt/blog-api
@@ -14,6 +14,8 @@ RUN go get -d -v ./...
 RUN go install -v ./...
 
 ENV PORT=8080
+
+ENV REDIS_ADDRESS="redis-0.redis.default.svc.cluster.local:6379"
 
 # This container exposes port 8080 to the outside world
 EXPOSE 8080

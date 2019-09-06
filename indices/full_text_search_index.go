@@ -214,6 +214,7 @@ Intuition: can fit substr once at beginning, and then slide it over len(item) - 
 Full word only at first. Sounds good?
 */
 
+// want to maintain digits
 func init() {
 	stopwords.DontStripDigits()
 }

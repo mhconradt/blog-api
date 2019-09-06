@@ -9,7 +9,10 @@ import (
 	"github.com/mhconradt/blog-api/article_snippet"
 	"github.com/mhconradt/blog-api/config"
 	"github.com/mhconradt/blog-api/util"
+	"os"
 )
+
+var addr string
 
 type RedisClient struct {
 	*redis.Client
@@ -52,18 +55,18 @@ func (c *RedisClient) SetArticle(a article.Article) error {
 }
 
 func (c *RedisClient) GetArticle(id int) (article.Article, error) {
-	keys := []string{"body", "views", "title", "topics", "timestamp", "id"}
-	va, err := c.HMGet(ArticleKeyFromId(id), keys...).Result()
+	keys := []string{ArticleKeyFromId(id), "body", "views", "title", "topics", "timestamp", "id"}
+	va, err := c.EvalSha(config.GetArticle, keys).Result()
 	if err != nil {
 		return article.Article{}, err
 	}
-	vm := util.ZipMap(keys, va)
+	vm := util.ZipMap(keys[1:], va.([]interface{}))
 	return article.FromRedis(vm)
 }
 
 func GetConfig() *redis.Options {
 	return &redis.Options{
-		Addr: "localhost:6379",
+		Addr: addr,
 	}
 }
 
@@ -71,4 +74,12 @@ func GetRedisClient() *RedisClient {
 	cfg := GetConfig()
 	c := redis.NewClient(cfg)
 	return &RedisClient{c}
+}
+
+func init() {
+	if a, found := os.LookupEnv("REDIS_ADDRESS"); !found {
+		addr = "localhost:6379"
+	} else {
+		addr = a
+	}
 }
