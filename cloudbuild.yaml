@@ -5,11 +5,10 @@ steps:
     args: [ 'push', 'gcr.io/$PROJECT_ID/blog-api:${TAG_NAME}' ]
   - name: 'gcr.io/cloud-builders/kubectl'
     args:
-      - patch
-      - deployment
-      - blog-api
-      - --type=json
-      - '-p ''{"spec":{"containers":[{"name":"gcr.io/personal-251201/blog-api:${TAG_NAME}"}]}}'''
+      - set
+      - image
+      - deployment/blog-api
+      - blog-api='gcr.io/$PROJECT_ID/blog-api:${TAG_NAME}'
     env:
       - CLOUDSDK_COMPUTE_ZONE=us-central1-a
       - CLOUDSDK_CONTAINER_CLUSTER=blog
