@@ -1,0 +1,24 @@
+syntax="proto3";
+package search_results;
+
+
+message ArticleSnippet {
+    int32 id = 1;
+    string title = 2;
+    int32 timestamp = 3;
+    string body = 4;
+}
+
+message Cursor {
+    int32 forward = 1;
+    int32 reverse = 2;
+    int32 count = 3;
+    string term = 4;
+    string index = 5;
+}
+
+message SearchResults {
+    repeated ArticleSnippet results = 1;
+
+    Cursor cursor = 2;
+}

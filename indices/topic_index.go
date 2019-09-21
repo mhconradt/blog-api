@@ -5,6 +5,7 @@ import (
 	"github.com/mhconradt/blog-api/article"
 	"github.com/mhconradt/blog-api/config"
 	"github.com/mhconradt/blog-api/redis_client"
+	"github.com/mhconradt/blog-api/search_results"
 	"github.com/mhconradt/blog-api/util"
 	"strings"
 )
@@ -14,7 +15,7 @@ type TopicIndex struct {
 }
 
 func (t TopicIndex) Populate(a article.Article, c *redis_client.RedisClient) error {
-	cmd := c.EvalSha(config.PopulateIndex, a.Topics, "topics", a.ID, config.SnippetPrefix)
+	cmd := c.EvalSha(config.PopulateIndex, a.Topics, "topics", a.Id, config.SnippetPrefix)
 	return cmd.Err()
 }
 
@@ -24,27 +25,27 @@ func (t TopicIndex) Update(a article.Article, c *redis_client.RedisClient) error
 	}
 	// get current topics
 	// only need to add and delete necessary ones
-	reverseIndexKey := fmt.Sprintf("topics.reverse.%v", a.ID)
+	reverseIndexKey := fmt.Sprintf("topics.reverse.%v", a.Id)
 	old := c.LRange(reverseIndexKey, 0, -1).Val()
 	additions, removals := Diff(old, a.Topics)
 	if len(additions) > 0 {
-		if cmd := c.EvalSha(config.PopulateIndex, additions, "topics", a.ID, config.SnippetPrefix); cmd.Err() != nil {
+		if cmd := c.EvalSha(config.PopulateIndex, additions, "topics", a.Id, config.SnippetPrefix); cmd.Err() != nil {
 			return cmd.Err()
 		}
 	}
 	if len(removals) > 0 {
-		if cmd := c.EvalSha(config.RemoveIndexEntries, removals, "topics", a.ID, config.SnippetPrefix); cmd.Err() != nil {
+		if cmd := c.EvalSha(config.RemoveIndexEntries, removals, "topics", a.Id, config.SnippetPrefix); cmd.Err() != nil {
 			return cmd.Err()
 		}
 	}
 	return nil
 }
 
-func (t TopicIndex) Search(q Query) ([]string, Cursor, error) {
+func (t TopicIndex) Search(q Query) ([]string, search_results.Cursor, error) {
 	// range is inclusive
-	end := q.Cursor + int64(int(q.PageDirection)*q.Limit) - 1
+	end := q.Cursor + int32(q.PageDirection)*q.Limit - 1
 	// if pageDir is ascending: cursor is index of beginning next page
-	min, max := func(a, b int64) (int64, int64) {
+	min, max := func(a, b int32) (int32, int32) {
 		if a > b {
 			return b, a
 		}
@@ -54,7 +55,7 @@ func (t TopicIndex) Search(q Query) ([]string, Cursor, error) {
 	result, err := t.EvalSha(config.SearchListIndex, []string{}, "topics", q.Term, min, max).Result()
 	if err != nil {
 		if strings.Index(err.Error(), "table expected") == -1 {
-			return []string{}, Cursor{}, err
+			return []string{}, search_results.Cursor{}, err
 		}
 		result = []interface{}{}
 	}

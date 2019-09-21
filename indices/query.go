@@ -1,11 +1,15 @@
 package indices
 
 import (
+	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/mhconradt/blog-api/config"
 	"github.com/mhconradt/blog-api/redis_client"
+	"github.com/mhconradt/blog-api/search_results"
 	"net/url"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type Direction int
@@ -30,9 +34,9 @@ const (
 type Query struct {
 	PageDirection Direction
 	Index
-	Cursor int64
+	Cursor int32
 	Term   string
-	Limit  int
+	Limit  int32
 }
 
 func DirectionFromQuery(v url.Values, f string) Direction {
@@ -73,7 +77,7 @@ func IndexFromQuery(v url.Values) Index {
 	}
 }
 
-func CursorFromQuery(v url.Values) int64 {
+func CursorFromQuery(v url.Values) int {
 	curStr, found := StringAtField(v, "cursor")
 	if !found {
 		return DefaultCursor
@@ -82,7 +86,7 @@ func CursorFromQuery(v url.Values) int64 {
 	if err != nil {
 		return DefaultCursor
 	}
-	return cur
+	return int(cur)
 }
 
 func StringAtField(v url.Values, f string) (string, bool) {
@@ -112,8 +116,8 @@ func ParseQuery(v url.Values) Query {
 		PageDirection: pd,
 		Index:         i,
 		Term:          t,
-		Cursor:        c,
-		Limit:         l,
+		Cursor:        int32(c),
+		Limit:         int32(l),
 	}
 }
 
@@ -128,4 +132,36 @@ func GetIndexForQuery(q Query, c *redis_client.RedisClient) ArticleIndex {
 	default:
 		return DateIndex{c}
 	}
+}
+
+func MarshalProtos(bufs []string) ([]*search_results.ArticleSnippet, error) {
+	count := len(bufs)
+	snippets := make([]*search_results.ArticleSnippet, count, count)
+	for i, b := range bufs {
+		snippets[i] = &search_results.ArticleSnippet{}
+		if err := proto.Unmarshal([]byte(b), snippets[i]); err != nil {
+			return snippets, err
+		}
+	}
+	fmt.Println(snippets)
+	return snippets, nil
+}
+
+func Search(q Query, c *redis_client.RedisClient) (search_results.SearchResults, error) {
+	i := GetIndexForQuery(q, c)
+	results, cur, err := i.Search(q)
+	if err != nil {
+		return search_results.SearchResults{}, err
+	}
+	start := time.Now().UnixNano()
+	snippets, err := MarshalProtos(results)
+	end := time.Now().UnixNano()
+	fmt.Println("decode duration: ", end-start)
+	if err != nil {
+		return search_results.SearchResults{}, err
+	}
+	return search_results.SearchResults{
+		Results: snippets,
+		Cursor:  &cur,
+	}, nil
 }

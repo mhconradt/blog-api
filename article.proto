@@ -1,0 +1,13 @@
+syntax="proto3";
+package article;
+
+message Article {
+    int32 id = 1;
+    string title = 2;
+    int32 timestamp = 3;
+    string body = 4;
+    int32 views = 5;
+    repeated string topics = 6;
+}
+
+

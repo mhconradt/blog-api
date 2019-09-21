@@ -31,5 +31,5 @@ func UpdateArticle(w http.ResponseWriter, r *http.Request, c *redis_client.Redis
 /*
 TEST CASES:
 1. Removing fields:
-I should be able to send a PUT with the ID of an existing article without changing its data.
+I should be able to send a PUT with the Id of an existing article without changing its data.
 */

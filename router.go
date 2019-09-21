@@ -1,11 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 	"github.com/gorilla/mux"
 	"github.com/mhconradt/blog-api/article"
 	"github.com/mhconradt/blog-api/redis_client"
+	"github.com/mhconradt/blog-api/search_results"
 	"github.com/mhconradt/blog-api/util"
 	"log"
 	"net/http"
@@ -45,25 +46,26 @@ ENDPOINTS:
 // How to decouple rendering from data access?
 // Have the rendering process call the API. Boom.
 
-
 func LivenessProbeFunction(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(202)
 	_, _ = w.Write([]byte("all is well"))
 }
 
-func NewArticleResponder(w http.ResponseWriter) func(a article.Article, status int) {
-	return func(a article.Article, status int) {
-		w.Header().Add("Content-Type", "application/json")
+func NewArticleResponder(w http.ResponseWriter) func(a *article.Article, status int) {
+	return func(a *article.Article, status int) {
+		w.Header().Add("Content-Type", "application/protobuf")
 		w.WriteHeader(status)
-		_ = json.NewEncoder(w).Encode(a)
+		b, _ := proto.Marshal(a)
+		_, _ = w.Write(b)
 	}
 }
 
-func NewSearchResultsResponder(w http.ResponseWriter) func(r SearchResult, status int) {
-	return func(r SearchResult, status int) {
-		w.Header().Add("Content-Type", "application/json")
+func NewSearchResultsResponder(w http.ResponseWriter) func(r *search_results.SearchResults, status int) {
+	return func(r *search_results.SearchResults, status int) {
+		w.Header().Add("Content-Type", "application/protobuf")
 		w.WriteHeader(status)
-		_ = json.NewEncoder(w).Encode(r)
+		b, _ := proto.Marshal(r)
+		_, _ = w.Write(b)
 	}
 }
 

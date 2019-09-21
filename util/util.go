@@ -8,18 +8,7 @@ import (
 	"strings"
 )
 
-func ToInt64(i interface{}) int64 {
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("panic'd in ToInt64 with val: ", i)
-		}
-	}()
-	valStr := i.(string)
-	val, _ := strconv.ParseInt(valStr, 10, 64)
-	return val
-}
-
-func ToInt(i interface{}) int {
+func ToInt(i interface{}) int32 {
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("panic'd in ToInt with val: ", i)
@@ -27,12 +16,12 @@ func ToInt(i interface{}) int {
 	}()
 	valStr := i.(string)
 	val, _ := strconv.Atoi(valStr)
-	return val
+	return int32(val)
 }
 
 func ToStringSlice(is []interface{}) []string {
-	numVals := len(is)
-	vs := make([]string, numVals, numVals)
+	count := len(is)
+	vs := make([]string, count)
 	for i, v := range is {
 		vs[i] = v.(string)
 	}
@@ -50,11 +39,11 @@ func ToArray(i interface{}) []string {
 	return arr
 }
 
-func ZipMap(keys []string, vals []interface{}) map[string]interface{} {
+func ZipMap(ks []string, vs []interface{}) map[string]interface{} {
 	m := make(map[string]interface{})
-	for i, k := range keys {
-		if vals[i] != nil {
-			m[k] = vals[i]
+	for i, k := range ks {
+		if vs[i] != nil {
+			m[k] = vs[i]
 		}
 	}
 	return m

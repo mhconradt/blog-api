@@ -1,10 +1,12 @@
 package indices
 
 import (
+	"fmt"
 	"github.com/go-redis/redis"
 	"github.com/mhconradt/blog-api/article"
 	"github.com/mhconradt/blog-api/config"
 	"github.com/mhconradt/blog-api/redis_client"
+	"github.com/mhconradt/blog-api/search_results"
 	"github.com/mhconradt/blog-api/util"
 	"strings"
 )
@@ -25,11 +27,13 @@ func (d DateIndex) Update(_ article.Article, _ *redis_client.RedisClient) error 
 	return nil
 }
 
-func (d DateIndex) Search(q Query) ([]string, Cursor, error) {
+func (d DateIndex) Search(q Query) ([]string, search_results.Cursor, error) {
+	fmt.Println(q.Cursor)
+	fmt.Println(q.Limit)
 	result, err := d.EvalSha(config.SearchZIndex, []string{config.DateIndexKey}, q.Cursor, q.Limit).Result()
 	if err != nil {
 		if strings.Index(err.Error(), "table expected") == -1 {
-			return []string{}, Cursor{}, err
+			return []string{}, search_results.Cursor{}, err
 		}
 		result = []interface{}{}
 	}

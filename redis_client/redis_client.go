@@ -1,13 +1,12 @@
 package redis_client
 
 import (
-	"bytes"
-	"encoding/json"
 	"fmt"
 	"github.com/go-redis/redis"
+	"github.com/golang/protobuf/proto"
 	"github.com/mhconradt/blog-api/article"
-	"github.com/mhconradt/blog-api/article_snippet"
 	"github.com/mhconradt/blog-api/config"
+	"github.com/mhconradt/blog-api/search_results"
 	"github.com/mhconradt/blog-api/util"
 	"os"
 )
@@ -18,7 +17,7 @@ type RedisClient struct {
 	*redis.Client
 }
 
-func ArticleKeyFromId(id int) string {
+func ArticleKeyFromId(id int32) string {
 	return fmt.Sprintf(config.ArticlePrefix+"%v", id)
 }
 
@@ -33,32 +32,32 @@ func (c *RedisClient) WriteArticle(a article.Article) error {
 }
 
 func (c *RedisClient) WriteCache(a article.Article) error {
-	buf := bytes.NewBuffer([]byte{})
-	snip := article_snippet.SnippetFromArticle(a)
-	if err := json.NewEncoder(buf).Encode(snip); err != nil {
-		return nil
+	// proto.Marshal
+	snip := search_results.SnippetFromArticle(a)
+	b, err := proto.Marshal(&snip)
+	if err != nil {
+		return err
 	}
-	jsonStr := string(buf.Bytes())
-	key := fmt.Sprintf(config.SnippetPrefix+"%v", a.ID)
-	if err := c.Set(key, jsonStr, 0).Err(); err != nil {
+	key := fmt.Sprintf(config.SnippetPrefix+"%v", a.Id)
+	if err := c.Set(key, string(b), 0).Err(); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (c *RedisClient) NewId() int {
-	return int(c.Incr(config.IDKey).Val())
+func (c *RedisClient) NewId() int32 {
+	return int32(c.Incr(config.IDKey).Val())
 }
 
 func (c *RedisClient) SetArticle(a article.Article) error {
-	return c.HMSet(ArticleKeyFromId(a.ID), a.ToRedis()).Err()
+	return c.HMSet(ArticleKeyFromId(a.Id), a.ToRedis()).Err()
 }
 
-func (c *RedisClient) GetArticle(id int) (article.Article, error) {
+func (c *RedisClient) GetArticle(id int32) (*article.Article, error) {
 	keys := []string{ArticleKeyFromId(id), "body", "views", "title", "topics", "timestamp", "id"}
 	va, err := c.EvalSha(config.GetArticle, keys).Result()
 	if err != nil {
-		return article.Article{}, err
+		return new(article.Article), err
 	}
 	vm := util.ZipMap(keys[1:], va.([]interface{}))
 	return article.FromRedis(vm)

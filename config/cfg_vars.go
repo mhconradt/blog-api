@@ -5,7 +5,7 @@ const (
 	RemoveIndexEntries = "4f50bc2d90fe90f501acdc9e349d86faef2d329b"
 	SearchListIndex    = "daacb0d0f789a25feb9be0d9c4891b2b51fd1913"
 	GetArticle         = "20b7119e6ad77eaea9d81942b880d58adb4daba3"
-	SearchZIndex       = "f81ae105ab5d928ac14921cc2b7e0e4011bfd0e1"
+	SearchZIndex       = "c395602ded8b806bfd15270eeab95595340fbcc4"
 	/*
 		populate_full_text_forward_index.lua
 		ARGS:

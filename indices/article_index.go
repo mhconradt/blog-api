@@ -3,12 +3,13 @@ package indices
 import (
 	"github.com/mhconradt/blog-api/article"
 	"github.com/mhconradt/blog-api/redis_client"
+	"github.com/mhconradt/blog-api/search_results"
 )
 
 type ArticleIndex interface {
 	Populate(a article.Article, c *redis_client.RedisClient) error
 	Update(article article.Article, c *redis_client.RedisClient) error
-	Search(q Query) ([]string, Cursor, error)
+	Search(q Query) ([]string, search_results.Cursor, error)
 }
 
 func PopulateIndices(a article.Article, c *redis_client.RedisClient) error {

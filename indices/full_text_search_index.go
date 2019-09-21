@@ -7,6 +7,7 @@ import (
 	"github.com/mhconradt/blog-api/article"
 	"github.com/mhconradt/blog-api/config"
 	"github.com/mhconradt/blog-api/redis_client"
+	"github.com/mhconradt/blog-api/search_results"
 	"github.com/mhconradt/blog-api/util"
 	"strings"
 )
@@ -16,7 +17,7 @@ type FullTextSearchIndex struct {
 }
 
 func (fts FullTextSearchIndex) reverseIndexKey(a article.Article) string {
-	return fmt.Sprintf(config.FullTextSearchReversePrefix+"%v", a.ID)
+	return fmt.Sprintf(config.FullTextSearchReversePrefix+"%v", a.Id)
 }
 
 func (fts FullTextSearchIndex) forwardIndexKey(word string) string {
@@ -125,7 +126,7 @@ func (fts FullTextSearchIndex) populateIndex(a article.Article, wc map[string]in
 		return err
 	}
 	words, counts := UnzipMap(wc)
-	args := []string{fmt.Sprintf("%v", a.ID), config.SnippetPrefix, config.FullTextSearchForwardPrefix}
+	args := []string{fmt.Sprintf("%v", a.Id), config.SnippetPrefix, config.FullTextSearchForwardPrefix}
 	args = append(args, MapCountsToStrings(counts)...)
 	err = c.EvalSha(config.PopulateFullTextForwardIndex, words, args).Err()
 	if err != nil {
@@ -136,7 +137,7 @@ func (fts FullTextSearchIndex) populateIndex(a article.Article, wc map[string]in
 }
 
 func (fts FullTextSearchIndex) removeIndexEntries(a article.Article, keys []string, c *redis_client.RedisClient) error {
-	return c.EvalSha(config.RemoveHitFromFTS, keys, a.ID, config.FullTextSearchForwardPrefix, config.FullTextSearchReversePrefix, config.SnippetPrefix).Err()
+	return c.EvalSha(config.RemoveHitFromFTS, keys, a.Id, config.FullTextSearchForwardPrefix, config.FullTextSearchReversePrefix, config.SnippetPrefix).Err()
 }
 
 func (fts FullTextSearchIndex) Populate(a article.Article, c *redis_client.RedisClient) error {
@@ -195,11 +196,11 @@ func (fts FullTextSearchIndex) Update(a article.Article, c *redis_client.RedisCl
 	// in wc but not exc? insert
 }
 
-func (fts FullTextSearchIndex) Search(q Query) ([]string, Cursor, error) {
+func (fts FullTextSearchIndex) Search(q Query) ([]string, search_results.Cursor, error) {
 	result, err := fts.EvalSha(config.SearchZIndex, []string{fts.forwardIndexKey(q.Term)}, q.Cursor, q.Limit).Result()
 	if err != nil {
 		if strings.Index(err.Error(), "table expected") == -1 {
-			return []string{}, Cursor{}, err
+			return []string{}, search_results.Cursor{}, err
 		}
 		result = []interface{}{}
 	}

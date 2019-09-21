@@ -11,7 +11,7 @@ func GetArticle(w http.ResponseWriter, r *http.Request, c *redis_client.RedisCli
 	er := NewErrorResponder(w)
 	v := mux.Vars(r)
 	id, _ := strconv.Atoi(v["id"])
-	a, err := c.GetArticle(id)
+	a, err := c.GetArticle(int32(id))
 	if err != nil {
 		er(err, 404)
 		return
